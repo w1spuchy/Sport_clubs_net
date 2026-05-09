@@ -4,6 +4,7 @@ import { HttpError} from './utils/HttpError.js';
 import clientsRoutes from './routes/clientsRouter.js';
 import purchasesRouter from './routes/purchases.router.js';
 import activeSubscriptionsRouter from './routes/activeSubscriptions.router.js';
+import visitsRouter from './routes/visits.router.js';
 
 
 const app = express()
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use('/api/clients', clientsRoutes);
 app.use("/api/purchases", purchasesRouter);
 app.use("/api/active-subscriptions", activeSubscriptionsRouter);
+app.use("/api/visits", visitsRouter);
 
 
 app.use((req, res) => res.status(404).json({ error: "Not Found" }));
