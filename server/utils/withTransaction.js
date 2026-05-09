@@ -1,4 +1,4 @@
-import pool from "../db/pool.js";
+import pool from "../dataBase.js";
 
 export async function withTransaction(work) {
   const conn = await pool.getConnection();
