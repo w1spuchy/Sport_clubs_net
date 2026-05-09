@@ -1,5 +1,7 @@
-import express from 'express'
-import clientsRoutes from './routes/clientsRouter.js'
+import express from 'express';
+import { HttpError} from './utils/HttpError.js';
+
+import clientsRoutes from './routes/clientsRouter.js';
 
 const app = express()
 
