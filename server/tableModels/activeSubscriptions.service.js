@@ -1,5 +1,25 @@
 import { HttpError } from "../utils/HttpError.js";
 import { withTransaction } from "../utils/withTransaction.js";
+import pool from '../dataBase.js';
+
+export async function expireSubscriptions() {
+    const [result] = await pool.query(
+        `
+        UPDATE activeSubscriptions AS a
+        JOIN subscriptions AS s USING(idSubscription) 
+        SET a.SubscriptionStatus = 'Expired'
+        WHERE a.SubscriptionStatus = 'Active'
+        AND 
+        (
+            (s.VisitAmount IS NOT NULL AND a.VisitsCount >= s.VisitAmount)
+            OR
+            (s.ValidityPeriodInSec IS NOT NULL
+            AND CURRENT_TIMESTAMP > DATE_ADD(a.PurchaseDate, INTERVAL s.ValidityPeriodInSec SECOND))
+        )`
+    );
+
+    return { expiredCount: result.affectedRows };
+}
 
 export async function cancelSubscription(idActiveSubscription) 
 {
@@ -39,3 +59,4 @@ export async function cancelSubscription(idActiveSubscription)
     return { idActiveSubscription: idActiveSubscription, status: "Blocked" };
   });
 }
+
