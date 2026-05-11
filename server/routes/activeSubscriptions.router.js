@@ -4,6 +4,10 @@ import { cancelSubscription, expireSubscriptions } from '../tableModels/activeSu
 
 const router = express.Router();
 
+router.get("/" , asyncHandler( async (req, res)=>{
+  
+}))
+
 router.patch("/expire", asyncHandler(async (req, res) => {
   const result = await expireSubscriptions();
   res.json(result);

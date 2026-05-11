@@ -32,7 +32,7 @@ export async function getClubById(idClub) {
   if (!club) throw new HttpError(404, "Club not found");
 
   const [zones] = await pool.query(`
-    SELECT idZone, ZoneType
+    SELECT idZone, ZoneType, Capacity
     FROM zones
     WHERE idClub = ?
     `, idClub);
@@ -41,6 +41,58 @@ export async function getClubById(idClub) {
     club: club,
     zones: zones ?? null
   };
+}
+
+export async function addClub(body)
+{
+  const {ClubName, ClubAddress, OpeningTime, ClosingTime} = body
+
+  const [sameAddressClub] = await pool.query(`
+      SELECT 1 FROM clubs WHERE ClubAddress = ? LIMIT 1
+    `, [ClubAddress]);
+  if(sameAddressClub.length > 0)
+  {
+    throw new HttpError(409, "Club on this address already exist");
+  }
+
+  const openStr = String(OpeningTime).length === 5 ? `${OpeningTime}:00` : String(OpeningTime);
+  const closeStr = String(ClosingTime).length === 5 ? `${ClosingTime}:00` : String(ClosingTime);
+  if (openStr >= closeStr) {
+    throw new HttpError(409, "OpeningTime must be earlier than ClosingTime");
+  }
+
+  const [newClub] = await pool.query(`
+    INSERT INTO clubs(ClubName, ClubAddress, OpeningTime, ClosingTime) VALUES (?,?,?,?)
+    `, [ClubName, ClubAddress, OpeningTime, ClosingTime]);
+  const newClubId = newClub.insertId;
+
+  return getClubById(newClubId);
+}
+
+export async function addZoneForClub(id, body) {
+  const { ZoneType, Capacity } = body;
+
+  const [isClubExist] = await pool.query(`SELECT 1 FROM clubs WHERE idClub = ?`, [id]);
+  if(isClubExist.length === 0){
+    throw new HttpError(404, "Club not found");
+  }
+
+  const ZONE_TYPES = new Set(['Gym','Yoga Zone','Swimming Pool','Boxing Zone','Sauna','Crossfit Zone']);
+  if(!ZONE_TYPES.has(ZoneType)){
+    throw new HttpError(409, "Invalid Zone type", {ZoneType: ZoneType});
+  }
+
+  if(Capacity < 0){
+    throw new HttpError(409, "Zone capacity should be grater than 0");
+  }
+
+  const [newZone] = await pool.query(`INSERT INTO zones(idClub, ZoneType, Capacity) VALUES (?, ?, ?)`,[id, ZoneType, Capacity]);
+  return{
+    idZone: newZone.insertId,
+    idClub: id,
+    ZoneType: ZoneType,
+    Capacity: Capacity
+  } 
 }
 
 
@@ -80,7 +132,7 @@ export async function patchClubById(idClub, body) {
   return getClubById(idClub);
 }
 
-export async function deleteClubByIdSafe(idClub) {
+export async function deleteClubById(idClub) {
   return withTransaction(async (conn) => {
     const [clubs] = await conn.query(`SELECT idClub FROM Clubs WHERE idClub = ?`, [idClub]);
     if (!clubs[0]) throw new HttpError(404, "Club not found");

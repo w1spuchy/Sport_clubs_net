@@ -1,7 +1,7 @@
 import express from 'express';
 import { HttpError} from './utils/HttpError.js';
 
-import clientsRoutes from './routes/clientsRouter.js';
+import clientsRoutes from './routes/clients.router.js';
 import purchasesRouter from './routes/purchases.router.js';
 import activeSubscriptionsRouter from './routes/activeSubscriptions.router.js';
 import visitsRouter from './routes/visits.router.js';

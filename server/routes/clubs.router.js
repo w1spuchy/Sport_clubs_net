@@ -3,29 +3,41 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   getClubs,
   getClubById,
+  addClub,
+  addZoneForClub,
   patchClubById,
-  deleteClubByIdSafe,
+  deleteClubById,
 } from "../tableModels/clubs.service.js";
 
 const router = express.Router();
 
 router.get("/", asyncHandler(async (req, res) => {
-  const clubs = await getClubs();
-  res.json(clubs);
+  const result = await getClubs();
+  res.json(result);
 }));
 
 router.get("/:id", asyncHandler(async (req, res) => {
-  const club = await getClubById(req.params.id);
-  res.json(club);
+  const result = await getClubById(req.params.id);
+  res.json(result);
 }));
 
 router.patch("/:id", asyncHandler(async (req, res) => {
-  const updated = await patchClubById(req.params.id, req.body);
-  res.json(updated);
+  const result = await patchClubById(req.params.id, req.body);
+  res.json(result);
 }));
 
+router.post("/", asyncHandler(async(req,res)=>{
+  const result = await addClub(req.body)
+  res.status(201).json(result);
+}))
+
+router.post("/:id/zones", asyncHandler(async(req,res)=>{
+  const result = await addZoneForClub(req.params.id, req.body)
+  res.status(201).json(result);
+}))
+
 router.delete("/:id", asyncHandler(async (req, res) => {
-  await deleteClubByIdSafe(req.params.id);
+  await deleteClubById(req.params.id);
   res.status(204).send();
 }));
 

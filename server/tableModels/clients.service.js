@@ -76,20 +76,3 @@ export async function addClient(body) {
     const id = res.insertId;
     return getClient(id);
 }
-
-export async function deleteClient(id) 
-{
-    const client = await getClient(id);
-    if(client)
-    {
-        const res = await pool.query(`
-                DELETE FROM clients WHERE idClient = ?
-            `, [id]);
-        return client;
-    }
-    else
-    {
-        const err = new Error('Клиент не найден');
-        throw err
-    }
-}
