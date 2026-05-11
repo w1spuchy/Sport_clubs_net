@@ -1,11 +1,12 @@
 import express from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { cancelSubscription, expireSubscriptions } from '../tableModels/activeSubscriptions.service.js';
+import { cancelSubscription, expireSubscriptions, getActiveSubs } from '../tableModels/activeSubscriptions.service.js';
 
 const router = express.Router();
 
 router.get("/" , asyncHandler( async (req, res)=>{
-  
+  const result = await getActiveSubs(req.body);
+  res.json(result);
 }))
 
 router.patch("/expire", asyncHandler(async (req, res) => {
