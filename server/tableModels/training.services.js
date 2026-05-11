@@ -314,3 +314,37 @@ export async function registerForTraining(idTraining, body) {
     };
   });
 }
+
+export async function cancelRegistration(idRegistrationForClass) {
+  if (!idRegistrationForClass) throw new HttpError(400, "idRegistrationForClass is required");
+
+  return withTransaction(async (conn) => {
+    const [regs] = await conn.query(
+      `SELECT idRegistrationForClass, idTraining
+       FROM registrationsfortraining
+       WHERE idRegistrationForClass = ?`,
+      [idRegistrationForClass]
+    );
+    const reg = regs[0];
+    if (!reg) throw new HttpError(404, "Registration not found");
+
+    const [trainings] = await conn.query(
+      `SELECT TrainingDate FROM training WHERE idTraining = ?`,
+      [reg.idTraining]
+    );
+    const training = trainings[0];
+    if (!training) throw new HttpError(404, "Training not found for this registration");
+    if (new Date(training.TrainingDate) <= new Date()) throw new HttpError(409, "Training already started");
+
+    await conn.query(
+      `DELETE FROM registrationsfortraining
+       WHERE idRegistrationForClass = ?`,
+      [idRegistrationForClass]
+    );
+
+    return {
+        idRegistrationForClass: idRegistrationForClass,
+        deleteStatus: "success"
+    }
+  });
+}

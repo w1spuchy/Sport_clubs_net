@@ -5,6 +5,7 @@ import {
   patchTraining,
   deleteTraining,
   registerForTraining,
+  cancelRegistration
 } from "../tableModels/training.services.js";
 
 const router = express.Router();
@@ -14,9 +15,19 @@ router.post("/", asyncHandler(async (req, res) => {
   res.status(201).json(result);
 }));
 
+router.post("/:idTraining/registrations", asyncHandler(async (req, res) => {
+  const result = await registerForTraining(req.params.idTraining, req.body);
+  res.status(201).json(result);
+}));
+
 router.patch("/:idTraining", asyncHandler(async (req, res) => {
   const result = await patchTraining(req.params.idTraining, req.body);
   res.json(result);
+}));
+
+router.delete("/registrations", asyncHandler(async (req, res) => {
+  const result = await cancelRegistration(req.body.idRegistrationForClass);
+  res.status(201).json(result);
 }));
 
 router.delete("/:idTraining", asyncHandler(async (req, res) => {
@@ -24,9 +35,5 @@ router.delete("/:idTraining", asyncHandler(async (req, res) => {
   res.status(204).send();
 }));
 
-router.post("/:idTraining/registrations", asyncHandler(async (req, res) => {
-  const result = await registerForTraining(req.params.idTraining, req.body);
-  res.status(201).json(result);
-}));
 
 export default router;
