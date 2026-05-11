@@ -1,6 +1,36 @@
+import pool from "../dataBase.js";
 import { HttpError } from "../utils/HttpError.js";
 import { withTransaction } from "../utils/withTransaction.js";
 import { isClubOpenNow } from "../utils/time.js";
+
+export async function getClientVisits(idClient)
+{
+  const [client] = await pool.query(`
+    SELECT 1 FROM clients WHERE idClient = ? LIMIT 1
+    `, [idClient]);
+
+  if(!client[0])
+  {
+    throw new HttpError(404, "Client not found");
+  }
+
+  const [visits] = await pool.query(`
+    SELECT v.idVisit,
+        c.idClient,
+        c.FullName,
+        z.idZone,
+        z.ZoneType,
+        v.EnterTime,
+        v.OutTime
+    FROM visits v
+    JOIN clients c ON v.idClient = c.idClient
+    JOIN zones z ON z.idZone = v.idZone 
+    WHERE v.idClient = 1;
+    `
+    ,[idClient]);
+
+  return visits;
+}
 
 export async function checkIn(body) {
   const { idClient, idZone, idActiveSubscription } = body ?? {};

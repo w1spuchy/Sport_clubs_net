@@ -1,6 +1,8 @@
 import express from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
+  getTrainings,
+  getTrainingInfo,
   createTraining,
   patchTraining,
   deleteTraining,
@@ -9,6 +11,16 @@ import {
 } from "../tableModels/training.services.js";
 
 const router = express.Router();
+
+router.get("/", asyncHandler(async(req,res)=>{
+  const result = await getTrainings();
+  res.json(result);
+}));
+
+router.get("/:id", asyncHandler(async(req,res)=>{
+  const result = await getTrainingInfo(req.params.id);
+  res.json(result);
+}));
 
 router.post("/", asyncHandler(async (req, res) => {
   const result = await createTraining(req.body);

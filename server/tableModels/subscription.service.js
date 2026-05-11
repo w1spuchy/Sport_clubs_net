@@ -1,5 +1,20 @@
+import pool from "../dataBase.js";
 import { HttpError } from "../utils/HttpError.js";
 import { withTransaction } from "../utils/withTransaction.js";
+
+export async function getSubscriptions()
+{
+  const [res] = await pool.query(`
+    SELECt * FROM subscriptions AS s
+    JOIN (SELECT SubType, JSON_ARRAYAGG(ZoneType) AS Zones 
+        FROM zoneaccess 
+        GROUP BY SubType) AS z
+    USING(SubType)
+    ORDER BY SubType ASC, Coast ASC;
+    `)
+  
+  return res;
+}
 
 export async function createSubscriptionPlan(body) {
   const { subscription} = body ?? {};

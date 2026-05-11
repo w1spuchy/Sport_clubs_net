@@ -1,11 +1,52 @@
+import pool from "../dataBase.js";
 import { HttpError } from "../utils/HttpError.js";
 import { withTransaction } from "../utils/withTransaction.js";
 
-const ALLOWED_PAYMENT = new Set(["Cash", "Card"]);
+export async function getTransactionsAndSubs() {
+  const [res] = await pool.query(`
+    SELECT
+      t.idTransaction,
+      t.idAdmin,
+      t.idClient AS transaction_idClient,
+      t.idActiveSubscription,
+      t.TransactionSum,
+      t.PaymentMethod,
+      t.TransactionDate,
+      a.idClient AS activeSub_idClient,
+      a.idSubscription,
+      a.SubscriptionStatus,
+      a.VisitsCount,
+      a.PurchaseDate
+    FROM Transactions t
+    JOIN ActiveSubscriptions a
+      ON a.idActiveSubscription = t.idActiveSubscription
+  `);
+
+  return res.map(r => ({
+    transaction: {
+      idTransaction: r.idTransaction,
+      idAdmin: r.idAdmin,
+      idClient: r.transaction_idClient,
+      idActiveSubscription: r.idActiveSubscription,
+      transactionSum: r.TransactionSum,
+      paymentMethod: r.PaymentMethod,
+      transactionDate: r.TransactionDate,
+    },
+    activeSubscription: {
+      idActiveSubscription: r.idActiveSubscription,
+      idClient: r.activeSub_idClient,
+      idSubscription: r.idSubscription,
+      subscriptionStatus: r.SubscriptionStatus,
+      visitsCount: r.VisitsCount,
+      purchaseDate: r.PurchaseDate,
+    }
+  }));
+}
 
 export async function buySubscription(body)
 {
-    const { idClient, idSubscription, idAdmin, paymentMethod } = body ?? {};
+  const { idClient, idSubscription, idAdmin, paymentMethod } = body ?? {};
+  const ALLOWED_PAYMENT = new Set(["Cash", "Card"]);
 
     if (!idClient || !idSubscription || !idAdmin || !paymentMethod) {
         throw new HttpError(400, "idClient, idSubscription, idAdmin, paymentMethod are required");
@@ -37,7 +78,7 @@ export async function buySubscription(body)
     );
     if (!admin[0]) throw new HttpError(404, "Admin not found");
 
-    const [dup] = await conn.query(
+    const [duplicate] = await conn.query(
       `SELECT 1
        FROM activeSubscriptions
        WHERE idClient = ?
@@ -46,7 +87,7 @@ export async function buySubscription(body)
        LIMIT 1`,
       [idClient, idSubscription]
     );
-    if (dup[0]) throw new HttpError(409, "Active subscription already exists for this client and plan");
+    if (duplicate[0]) throw new HttpError(409, "Active subscription already exists for this client and plan");
 
     const [insActive] = await conn.query(
       `INSERT INTO activeSubscriptions (

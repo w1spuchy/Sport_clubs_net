@@ -1,3 +1,4 @@
+import pool from "../dataBase.js";
 import { HttpError } from "../utils/HttpError.js";
 import { withTransaction } from "../utils/withTransaction.js";
 import { minutesToSeconds, isDateWithinWorkingHours } from "../utils/time.js";
@@ -6,6 +7,68 @@ function toDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) throw new HttpError(400, "Invalid date", { value: value });
   return date;
+}
+
+export async function getTrainings()
+{
+  const [trainings] = await pool.query(
+    `
+      SELECT 
+              tr.idTraining,
+              train.idEmployee AS idTrainer,
+              CONCAT(train.Surname,' ', train.Name) AS FullName,
+              z.idZone,
+              z.ZoneType,
+              tr.TrainingType,
+              tr.TrainingDate,
+              tr.TrainingDuration,
+              tr.MaxCapacity,
+              tr.Status
+      FROM training tr
+      JOIN employees train ON train.idEmployee = tr.idTrainer
+      JOIN zones z ON z.idZone = tr.idZone;
+    `);
+  return trainings;
+}
+
+export async function getTrainingInfo(idTraining) {
+  const [training] = await pool.query(`
+      SELECT 
+              tr.idTraining,
+              train.idEmployee AS idTrainer,
+              CONCAT(train.Surname,' ', train.Name) AS FullName,
+              z.idZone,
+              z.ZoneType,
+              tr.TrainingType,
+              tr.TrainingDate,
+              tr.TrainingDuration,
+              tr.MaxCapacity,
+              tr.Status
+      FROM training tr
+      JOIN employees train ON train.idEmployee = tr.idTrainer
+      JOIN zones z ON z.idZone = tr.idZone
+      WHERE tr.idTraining = ?
+    `, [idTraining]);
+  if(!training[0])
+  {
+    throw new HttpError(404, "Training not found");
+  }
+
+  const [registrations] = await pool.query(`
+    SELECT reg.idRegistrationForClass AS idRegistration,
+           c.FullName
+    FROM registrationsfortraining reg
+    JOIN clients c USING(idClient) 
+    `, [idTraining])
+  if(!registrations.length > 0)
+  {
+    throw new HttpError(404, "No registrations found");
+  }
+
+  return {
+    training: training,
+    registrations: registrations
+  } 
 }
 
 export async function createTraining(body) {

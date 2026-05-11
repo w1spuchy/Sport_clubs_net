@@ -3,9 +3,15 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   createSubscriptionPlan,
   replaceZoneAccessForSubType,
+  getSubscriptions
 } from "../tableModels/subscription.service.js";
 
 const router = express.Router();
+
+router.get("/subscription-plans", asyncHandler(async (req, res) => {
+  const result = await getSubscriptions();
+  res.json(result);
+}));
 
 router.post("/subscription-plans", asyncHandler(async (req, res) => {
   const result = await createSubscriptionPlan(req.body);
