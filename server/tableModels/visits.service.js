@@ -80,7 +80,7 @@ export async function checkIn(body) {
     }
 
     const [rows] = await conn.query(
-    `SELECT a.idActiveSubscription
+    `SELECT a.idActiveSubscription, a.VisitsCount, s.VisitAmount
         FROM activeSubscriptions a
         JOIN subscriptions s USING(idSubscription)
         JOIN zones z ON z.idZone = ?
@@ -88,14 +88,29 @@ export async function checkIn(body) {
         WHERE a.idActiveSubscription = ?
         AND a.idClient = ?
         AND a.SubscriptionStatus = 'Active'
-        AND (s.VisitAmount IS NULL OR a.VisitsCount < s.VisitAmount)
+        AND (s.VisitAmount IS NULL OR a.VisitsCount <= s.VisitAmount)
         AND (s.ValidityPeriodInSec IS NULL
             OR CURRENT_TIMESTAMP <= DATE_ADD(a.PurchaseDate, INTERVAL s.ValidityPeriodInSec SECOND))
     `,
     [idZone, idActiveSubscription, idClient]
     );
     const activeSub = rows[0];
+    const visitsCount = rows[1];
+    const visitAmount = rows[2];
     if (!activeSub) throw new HttpError(403, "No suitable active subscription for this zone");
+    if (activeSub){
+      if(visitsCount >= visitAmount)
+      {
+        await conn.query(`
+          UPDATE activeSubscriptions
+          SET SubscriptionStatus = 'Expired'
+          WHERE idActiveSubscription = ?
+          `, [activeSub]
+        );
+        throw new HttpError(403, "Your subscription is expired");
+      }
+     };
+
 
     const [ins] = await conn.query(
       `INSERT INTO visits (idClient, idZone, EnterTime, OutTime)
