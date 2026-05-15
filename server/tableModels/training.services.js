@@ -97,7 +97,7 @@ export async function createTraining(body) {
     if (!trainerRow[0]) throw new HttpError(404, "Trainer not found");
 
     const [zoneRow] = await conn.query(
-      `SELECT idClub AS zoneClubId, Capacity
+      `SELECT idClub AS zoneClubId, Capacity, ZoneType
        FROM zones
        WHERE idZone = ?`,
       [idZone]
@@ -137,6 +137,27 @@ export async function createTraining(body) {
         AND TrainingDate < DATE_ADD(?, INTERVAL ? SECOND)
     `, [idZone, start, start, durationSec])
     if (zoneIntersect.length > 0) throw new HttpError(409, "Zone has intersection");
+    
+    const TRAINING_ZONE_MAP = {
+      Yoga: ["Yoga Zone"],
+      Crossfit: ["Crossfit Zone", "Gym"],
+      Swimming: ["Swimming Pool"],
+      PowerLifting: ["Gym"],
+      Boxing: ["Boxing Zone"],
+    };
+    const zoneType = zoneRow[0].ZoneType;
+    const allowedZones = TRAINING_ZONE_MAP[trainingType];
+    if (!allowedZones) {
+      throw new HttpError(400, "Unknown trainingType", { trainingType });
+    }
+    const isAllowed = allowedZones.includes(zoneType);
+    if (!isAllowed) {
+      throw new HttpError(403, "Zone type and training type dont match", {
+        trainingType,
+        zoneType,
+        allowedZones,
+      });
+    }
 
     const [ins] = await conn.query(
       `INSERT INTO training (idTrainer, idZone, TrainingType, TrainingDate, TrainingDuration, MaxCapacity)
