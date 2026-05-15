@@ -1,6 +1,6 @@
 import express from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { createTrainer, createAdmin, getEmployees, getTrainers, getAdmins, getEmployeeById, deleteEmployeeById } from "../tableModels/staff.service.js";
+import { createTrainer, createAdmin, getEmployees, getTrainers, getAdmins, getEmployeeById } from "../tableModels/staff.service.js";
 
 const router = express.Router();
 
@@ -34,9 +34,5 @@ router.post("/admins", asyncHandler(async (req, res) => {
   res.status(201).json(result);
 }));
 
-router.delete("/:id", asyncHandler(async (req, res) => {
-  const result = await deleteEmployeeById(req.params.id);
-  res.status(201).json(result);
-}))
 
 export default router;

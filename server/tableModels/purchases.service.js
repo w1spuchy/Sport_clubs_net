@@ -98,7 +98,7 @@ export async function buySubscription(body)
     );
     const activeSubscriptionId = insActive.insertId;
 
-    const [insTr] = await conn.query(
+    const [insTransaction] = await conn.query(
       `INSERT INTO transactions (
         idAdmin, idClient, idActiveSubscription,
         TransactionSum, PaymentMethod, TransactionDate
@@ -109,7 +109,7 @@ export async function buySubscription(body)
 
     return {
       activeSubscriptionId,
-      transactionId: insTr.insertId,
+      transactionId: insTransaction.insertId,
       idClient,
       idSubscription,
       status: "Active",

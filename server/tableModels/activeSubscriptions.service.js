@@ -40,7 +40,7 @@ export async function expireSubscriptions() {
             AND CURRENT_TIMESTAMP > DATE_ADD(a.PurchaseDate, INTERVAL s.ValidityPeriodInSec SECOND))
         )`
     );
-
+    
     return { expiredCount: result.affectedRows };
 }
 
