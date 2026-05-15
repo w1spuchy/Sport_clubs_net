@@ -95,17 +95,15 @@ export async function checkIn(body) {
     [idZone, idActiveSubscription, idClient]
     );
     const activeSub = rows[0];
-    const visitsCount = rows[1];
-    const visitAmount = rows[2];
     if (!activeSub) throw new HttpError(403, "No suitable active subscription for this zone");
     if (activeSub){
-      if(visitsCount >= visitAmount)
+      if(activeSub.VisitsCount >= activeSub.VisitAmount)
       {
         await conn.query(`
-          UPDATE activeSubscriptions
+          UPDATE activesubscriptions
           SET SubscriptionStatus = 'Expired'
           WHERE idActiveSubscription = ?
-          `, [activeSub]
+          `, [activeSub.idActiveSubscription]
         );
         throw new HttpError(403, "Your subscription is expired");
       }
