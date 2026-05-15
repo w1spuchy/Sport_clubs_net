@@ -59,6 +59,7 @@ export async function getTrainingInfo(idTraining) {
            c.FullName
     FROM registrationsfortraining reg
     JOIN clients c USING(idClient) 
+    WHERE idTraining = ?
     `, [idTraining])
   if(!registrations.length > 0)
   {
@@ -347,8 +348,9 @@ export async function registerForTraining(idTraining, body) {
     );
     const training = trainingRow[0];
     if (!training) throw new HttpError(404, "Training not found");
+    if(training.Status === "Cancelled") throw new HttpError(409, "Training is cancelled"); 
+    if(training.Status === "Completed") throw new HttpError(409, "Training is completed"); 
     if (new Date(training.TrainingDate) <= new Date()) throw new HttpError(409, "Training already started");
-    if(training.Status === "Cancelled") throw new HttpError(409, "Training is cancelled");
 
     const [duplicate] = await conn.query(
       `SELECT 1
